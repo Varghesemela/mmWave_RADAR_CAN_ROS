@@ -1,12 +1,9 @@
-
-#!/usr/bin/python2
 import can
 import struct
 import select
 import rospy
-from math import sqrt, atan2
-from radar_msg.msg import *
-
+from math import *
+from radar_msg.msg import *   
 
 
 class Radar_parse(object):
@@ -41,7 +38,8 @@ class Radar_parse(object):
             if(message_ID == '0x11'):
                 self.Num_of_objects = struct.unpack('B',radar_data.data[28:29])
                 self.Num_of_objects = self.Num_of_objects[-1]
-                print(self.Num_of_objects)
+                print("hello 11")
+                print("Radar1_obj",self.Num_of_objects)
                 self.limit = 0
             if(message_ID == '0x12'):
                     PCDX = []                       
@@ -73,7 +71,7 @@ class Radar_parse(object):
                         del self.radar1_msg                        
                         self.radar1_msg = RadarScan()  
                         
-                        print(self.radar_points.radarscan)                              
+                        print("radar_points1",self.radar1_points.radarscan)                              
                         if(self.limit <= self.Num_of_objects):
                             self.limit+= 1
                             #print("hello")
@@ -87,7 +85,7 @@ class Radar_parse(object):
             if(message_ID == '0x21'):
                 self.Num_of_objects = struct.unpack('B',radar_data.data[28:29])
                 self.Num_of_objects = self.Num_of_objects[-1] 
-                print(self.Num_of_objects)
+                print("Radar2_obj",self.Num_of_objects)
                 self.limit = 0
             if(message_ID == '0x22'):
                     PCDX = []                       
@@ -119,7 +117,7 @@ class Radar_parse(object):
                         del self.radar2_msg                        
                         self.radar2_msg = RadarScan()  
                         
-                        print(self.radar2_points.radarscan)                              
+                        print("Radar2_points",self.radar2_points.radarscan)                              
                         if(self.limit <= self.Num_of_objects):
                             self.limit+= 1
                             #print("hello")
