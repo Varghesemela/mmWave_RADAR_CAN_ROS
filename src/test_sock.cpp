@@ -11,9 +11,14 @@
 #include <sys/socket.h>
 
 #define total_radars 2
+#define Radar1 1
+#define Radar2 2
+#define Header_frame 1
+#define PCD_frame 2
+#define noiseprofile_frame 3
 
-struct can_frame canframe, radar[total_radars];
-
+struct can_frame canframe, radar_data[total_radars(+1)][3];
+uint32_t Radar_no = 0, Message_type = 0;
 int main(void)
 {
 
@@ -73,3 +78,28 @@ int main(void)
 }
 
 
+*void DataCANHandler::sortandpublishData(void){
+	Radar_no = canframe.can_id >> 4;
+	Message_type = canframe.can_id & 0x0F;
+	switch(message_type){
+
+		case Header_frame:
+
+
+			break;
+
+		case PCD_frame:
+			radar_data[Radar_no][PCD_frame]= canframe.data;
+			break;
+
+		case noiseprofile_frame:
+
+			break;
+	}
+}
+
+*void DataCANHandler::flushpublishedData(void){
+
+
+
+}
