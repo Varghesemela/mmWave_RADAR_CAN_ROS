@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -18,6 +19,7 @@
 #define noiseprofile_frame 3
 #define ENABLED 1
 #define DISABLED 0
+#define Radar_obj_max 20
 
 
 typedef struct DPIF_PointCloudCartesian_t{
@@ -56,20 +58,26 @@ struct radar_frame {
 
 
 
-struct can_frame canframe;
+struct canfd_frame canframe;
 struct radar_frame radar_data[total_radars];
 uint32_t Radar_no = 0, Message_type = 0;
-int SoM[total_radars] = {0}, EoM[total_radars] = {0};
+int countObj = 0;
+
+int readCANData(void);
+int sortandpublishData();
+int flushpublishedData();
 
 int main(void)
 {
-
+	readCANData();
+	sortandpublishData();
+	flushpublishedData();
 
 
 }
 
 
-*void DataCANHandler::readIncomingData(void){
+int readCANData(void){
 
 	int cansock_fd, i; 
     int enable_canfd = 1;
@@ -98,18 +106,12 @@ int main(void)
 		return 1;
 	}
     while(1){
-	    nbytes = read(cansock_fd, &canframe, sizeof(struct can_frame));
+	    nbytes = read(cansock_fd, &canframe, sizeof(struct canfd_frame));
         if (nbytes < 0) {
 		    perror("error: Read");
 		    return 1;
 	    }
 
-     //    printf("CAN ID : %X ", canframe.can_id);
-     //    printf("\t");
-	    // for (i = 0; i < canframe.can_dlc; i++){
-		   //  printf("%02X ",canframe.data[i]);
-     //    }
-	    // printf("\r\n");
     }
 	if (close(cansock_fd) < 0) {
 		perror("error: Close");
@@ -120,43 +122,57 @@ int main(void)
 }
 
 
-*void DataCANHandler::sortandpublishData(void){
-	Radar_no = canframe.can_id >> 4;
-	Message_type = canframe.can_id & 0x0F;
+int sortandpublishData(void){
+	uint32_t Radar_no = canframe.can_id >> 4;
+	uint32_t Message_type = canframe.can_id & 0x0F;
+	int currentframes = 0, currentp = 0;
+	
 	switch(Message_type){
 
 		case Header_frame:
-
-			memcpy(&radar_data[Radar_no].Num_of_Objects, &canframe.data->at(28), sizeof(radar_data[Radar_no][Message_type].Num_of_Objects));
-			
+			memcpy(&radar_data[Radar_no].Num_of_Objects, &canframe.data[28], sizeof(uint32_t));
+			printf("Radar no. %d, Num_of_Objects : %d\n",Radar_no, radar_data[Radar_no].Num_of_Objects);
 			break;
 
 		case PCD_frame:
-			
-			//if(radar_data[Radar_no][PCD_frame].Num_of_Objects > )
-				memcpy(radar_data[Radar_no].PCD_data.x, canframe.data->at(0), sizeof(radar_data[Radar_no].PCD_data.x));
-				memcpy(radar_data[Radar_no].PCD_data.y, canframe.data->at(0+4), sizeof(radar_data[Radar_no].PCD_data.y));
-				memcpy(radar_data[Radar_no].PCD_data.z, canframe.data->at(), sizeof(radar_data[Radar_no].PCD_data.z));
-				memcpy(radar_data[Radar_no].PCD_data.velocity, canframe.data->at(), sizeof(radar_data[Radar_no].PCD_data.velocity));
-			
+			if((radar_data[Radar_no].Num_of_Objects-countObj)<3){
+				currentframes = 4;
+			}
+			else{
+				currentframes = radar_data[Radar_no].Num_of_Objects-countObj;
+			}
+
+			for(int i = 0; i < currentframes; i++){
+				memcpy(&radar_data[Radar_no].PCD_data[countObj].x, &canframe.data[currentp], sizeof(float));
+				currentp+=(sizeof(float));
+				memcpy(&radar_data[Radar_no].PCD_data[countObj].y, &canframe.data[currentp], sizeof(float));
+				currentp+=(sizeof(float));
+				memcpy(&radar_data[Radar_no].PCD_data[countObj].z, &canframe.data[currentp], sizeof(float));
+				currentp+=(sizeof(float));
+				memcpy(&radar_data[Radar_no].PCD_data[countObj].velocity, &canframe.data[currentp], sizeof(float));
+				currentp+=(sizeof(float));
+				countObj++;
+				printf("%f %f %f %f\n", radar_data[Radar_no].PCD_data[countObj].x, radar_data[Radar_no].PCD_data[countObj].y,
+						 radar_data[Radar_no].PCD_data[countObj].z, radar_data[Radar_no].PCD_data[countObj].velocity);
+			}
+
 			break;
 
 		case noiseprofile_frame:
 
 			//write code here to copy noise profile data if needed
-			EoM[Radar_no] = ENABLED;
+			countObj = 0;
 
 			break;
-	}
-	for(int i = 1; i <= total_radars; i++){
-		if(EoM[i] == ENABLED){
-			//publish radar data of "i" radar
-			EoM[i] == DISABLED;
-		}
+		default:
+			printf("garbage data\n");
+			break;
 	}
 
 }
 
-*void DataCANHandler::flushpublishedData(void){
+int flushpublishedData(void){
+
+	memset(radar_data, 0, sizeof(radar_data));
 
 }
