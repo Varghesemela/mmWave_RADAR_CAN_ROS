@@ -69,10 +69,10 @@ int flushpublishedData();
 
 int main(void)
 {
-	readCANData();
+while(1){	
+    readCANData();
 	sortandpublishData();
-	flushpublishedData();
-
+}
 
 }
 
@@ -105,14 +105,13 @@ int readCANData(void){
 		perror("error: Bind");
 		return 1;
 	}
-    while(1){
+    
 	    nbytes = read(cansock_fd, &canframe, sizeof(struct canfd_frame));
         if (nbytes < 0) {
 		    perror("error: Read");
 		    return 1;
 	    }
 
-    }
 	if (close(cansock_fd) < 0) {
 		perror("error: Close");
 		return 1;
@@ -135,7 +134,7 @@ int sortandpublishData(void){
 			break;
 
 		case PCD_frame:
-			if((radar_data[Radar_no].Num_of_Objects-countObj)<3){
+			if((radar_data[Radar_no].Num_of_Objects-countObj)>3){
 				currentframes = 4;
 			}
 			else{
