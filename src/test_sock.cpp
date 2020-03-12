@@ -48,15 +48,16 @@ int16_t noise;
 
 struct radar_frame {
 	uint32_t   can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-	uint8_t	   Num_of_Objects;
+	uint32_t   timeCPUcycles;
+	uint32_t	   Num_of_Objects;
 	DPIF_PointCloudCartesian_t    PCD_data[Radar_obj_max];
-	DPIF_PointCloudSideInfo_t	  noiseprofile_data
+	DPIF_PointCloudSideInfo_t	  noiseprofile_data[Radar_obj_max];
 };
 
 
 
 struct can_frame canframe;
-struct radar_frame radar_data[total_radars][3];
+struct radar_frame radar_data[total_radars];
 uint32_t Radar_no = 0, Message_type = 0;
 int SoM[total_radars] = {0}, EoM[total_radars] = {0};
 
@@ -126,22 +127,18 @@ int main(void)
 
 		case Header_frame:
 
-			memcpy(&radar_data[Radar_no][Message_type].data, &canframe.data, sizeof(canframe.data));
-			SoM[Radar_no] = ENABLED; 
+			memcpy(&radar_data[Radar_no].Num_of_Objects, &canframe.data->at(28), sizeof(radar_data[Radar_no][Message_type].Num_of_Objects));
+			
 			break;
 
 		case PCD_frame:
-			if(SoM[Radar_no]){
-
-				memcpy(radar_data[Radar_no][PCD_frame].data, canframe.data, sizeof(canframe.data));
-				SoM[Radar_no] = DISABLED;
-			}
-			else{
-				//append the data rather than copying
-				if(radar_data[Radar_no][PCD_frame].Num_of_Objects > /**/)
-				strcat(radar_data[Radar_no][PCD_frame].data, canframe.data);	
-			}
-
+			
+			//if(radar_data[Radar_no][PCD_frame].Num_of_Objects > )
+				memcpy(radar_data[Radar_no].PCD_data.x, canframe.data->at(0), sizeof(radar_data[Radar_no].PCD_data.x));
+				memcpy(radar_data[Radar_no].PCD_data.y, canframe.data->at(0+4), sizeof(radar_data[Radar_no].PCD_data.y));
+				memcpy(radar_data[Radar_no].PCD_data.z, canframe.data->at(), sizeof(radar_data[Radar_no].PCD_data.z));
+				memcpy(radar_data[Radar_no].PCD_data.velocity, canframe.data->at(), sizeof(radar_data[Radar_no].PCD_data.velocity));
+			
 			break;
 
 		case noiseprofile_frame:
