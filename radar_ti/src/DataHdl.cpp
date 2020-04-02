@@ -55,7 +55,7 @@ int main(int argc, char **argv){
     pthread_mutex_destroy(&swap_mutex);
     pthread_mutex_destroy(&sort_mutex);
     ros::shutdown();
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void* readCANData(void* arg){
