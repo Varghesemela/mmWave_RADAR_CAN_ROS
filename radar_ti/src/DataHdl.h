@@ -26,7 +26,7 @@
 #define noiseprofile_frame 3
 #define ENABLED 1
 #define DISABLED 0
-#define Radar_obj_max 20
+#define Radar_obj_max 30
 
 
 typedef struct DPIF_PointCloudCartesian_t{
@@ -65,7 +65,7 @@ struct radar_frame {
 struct canfd_frame canframe_read, canframe_sort;
 struct radar_frame radar_data[total_radars];
 uint32_t Radar_no = 0, Message_type = 0;
-int countObj[total_radars] = {0};
+uint8_t countObj[total_radars] = {0};
 
 pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t swap_mutex = PTHREAD_MUTEX_INITIALIZER;
