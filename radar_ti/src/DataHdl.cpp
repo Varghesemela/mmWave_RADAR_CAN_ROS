@@ -1,5 +1,7 @@
 #include "DataHdl.h"
 
+int exception_flag;
+
 int main(int argc, char **argv){
     int thret1, thret2, thret3;
     pthread_t readThread, swapThread, sortThread;
@@ -149,22 +151,41 @@ void* sortandpublishData(void* arg){
 
 					for(int i = 0; i < currentframes; i++){
 						radar_ti::RadarScan temp_radar;
-										
+						
+						exception_flag = 0;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].x, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].y, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].z, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].velocity, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						
-						temp_radar.point_id = countObj[Radar_no];
-						temp_radar.x = radar_data[Radar_no].PCD_data[countObj[Radar_no]].y;
-						temp_radar.y = -radar_data[Radar_no].PCD_data[countObj[Radar_no]].x;
-						temp_radar.z = radar_data[Radar_no].PCD_data[countObj[Radar_no]].z;            
-						temp_radar.velocity = radar_data[Radar_no].PCD_data[countObj[Radar_no]].velocity;
+						try{
+							if(exception_flag){
+								throw exception_flag;
+							}
+							temp_radar.point_id = countObj[Radar_no];
+							temp_radar.x = radar_data[Radar_no].PCD_data[countObj[Radar_no]].y;
+							temp_radar.y = -radar_data[Radar_no].PCD_data[countObj[Radar_no]].x;
+							temp_radar.z = radar_data[Radar_no].PCD_data[countObj[Radar_no]].z;            
+							temp_radar.velocity = radar_data[Radar_no].PCD_data[countObj[Radar_no]].velocity;
 
+						}
+						catch(int exception_flag){
+							temp_radar.point_id = countObj[Radar_no];
+							temp_radar.x = 0;
+							temp_radar.y = 0;
+							temp_radar.z = 0;      
+							temp_radar.velocity = 0;
+
+							printf("Got a NaN after object %d, data is %d\n", countObj[Radar_no], exception_flag);
+						}
 						radar[Radar_no].radarscan.push_back(temp_radar);
 						printf("%f %f %f %f\n", radar_data[Radar_no].PCD_data[countObj[Radar_no]].x, radar_data[Radar_no].PCD_data[countObj[Radar_no]].y,
 								radar_data[Radar_no].PCD_data[countObj[Radar_no]].z, radar_data[Radar_no].PCD_data[countObj[Radar_no]].velocity);
