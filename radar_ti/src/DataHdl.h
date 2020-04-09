@@ -62,7 +62,7 @@ struct radar_frame {
 	DPIF_PointCloudSideInfo_t	  noiseprofile_data[Radar_obj_max];
 };
 
-struct canfd_frame canframe_read, canframe_sort;
+struct canfd_frame canframe_read, canframe_sort, canframe_null = {};
 struct radar_frame radar_data[total_radars];
 uint32_t Radar_no = 0, Message_type = 0;
 uint8_t countObj[total_radars] = {0};

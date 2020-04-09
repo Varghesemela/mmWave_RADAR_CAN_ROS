@@ -92,7 +92,7 @@ void* readCANData(void* arg){
 		canframe_read = canframe_null;
         nbytes = read(cansock_fd, &canframe_read, sizeof(struct canfd_frame));
         if (nbytes < 0) {
-	        perror("error: Read");	         
+	        printf("error: Read");         
         } 
     	// printf("readdata\n");
 		pthread_mutex_unlock(&read_mutex);
