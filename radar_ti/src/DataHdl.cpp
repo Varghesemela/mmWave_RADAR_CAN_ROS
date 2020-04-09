@@ -62,49 +62,43 @@ int main(int argc, char **argv){
 
 void* readCANData(void* arg){
 
-	int cansock_fd, i; 
-    int enable_canfd = 1;                       
-	int nbytes;
-    struct sockaddr_can sock_addr;		
-	struct ifreq ifr;
-	sock_addr.can_family = AF_CAN;
-	sock_addr.can_ifindex = ifr.ifr_ifindex;
-	
-	if ((cansock_fd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0){
-	    perror("error: socket init");	
-	}
-    
-    if(setsockopt(cansock_fd, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd))<0){
-        perror("error: switching to canfd");             
-    }
-
-	strcpy(ifr.ifr_name, "can1" );
-	ioctl(cansock_fd, SIOCGIFINDEX, &ifr);
-	memset(&sock_addr, 0, sizeof(sock_addr));
-	    
-	if (bind(cansock_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr)) < 0) {
-	    perror("error: Bind");		     
-	}
-
     while(ros::ok()){
-		pthread_mutex_lock(&swap_mutex);   
+		int cansock_fd, i; 
+        int enable_canfd = 1;                       
+	    int nbytes;
+        struct sockaddr_can sock_addr;		
+	    struct ifreq ifr;
+	    sock_addr.can_family = AF_CAN;
+	    sock_addr.can_ifindex = ifr.ifr_ifindex;
+	
 		pthread_mutex_lock(&read_mutex);   
-		canframe_read = canframe_null;
+	    if ((cansock_fd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0){
+		    perror("error: socket init");	
+	    }
+        if(setsockopt(cansock_fd, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd))<0){
+            perror("error: switching to canfd");             
+        }
+	    strcpy(ifr.ifr_name, "can1" );
+	    ioctl(cansock_fd, SIOCGIFINDEX, &ifr);
+	    memset(&sock_addr, 0, sizeof(sock_addr));
+	    
+	    if (bind(cansock_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr)) < 0) {
+		    perror("error: Bind");		     
+	    }
         nbytes = read(cansock_fd, &canframe_read, sizeof(struct canfd_frame));
         if (nbytes < 0) {
-	        printf("error: Read");         
+	        perror("error: Read");	         
         } 
-    	// printf("readdata\n");
-		pthread_mutex_unlock(&read_mutex);
+        if (close(cansock_fd) < 0) {
+		    perror("error: Close");		     
+	    }
+		// printf("readdata\n");
 		pthread_cond_signal(&swap_cv);
-		pthread_cond_wait(&read_cv, &swap_mutex);
-			
+		
+		pthread_cond_wait(&read_cv, &read_mutex);
+		pthread_mutex_unlock(&read_mutex);
+		
     }
-
-    if (close(cansock_fd) < 0) {
-	    perror("error: Close");		     
-	}
-	
 	return NULL;
 }
 
@@ -114,7 +108,6 @@ void* swapData(void* arg){
 
 		pthread_mutex_lock(&swap_mutex);
 		pthread_cond_wait(&swap_cv, &swap_mutex);
-		pthread_mutex_unlock(&swap_mutex);
 		pthread_mutex_lock(&sort_mutex);
 		pthread_mutex_lock(&read_mutex);
 		struct canfd_frame canframe_temp = canframe_read;
@@ -125,6 +118,7 @@ void* swapData(void* arg){
 		pthread_mutex_unlock(&read_mutex);
 		pthread_cond_signal(&sort_cv);
 		pthread_cond_signal(&read_cv);
+		pthread_mutex_unlock(&swap_mutex);
 
 	}
 	return NULL;
@@ -133,11 +127,8 @@ void* swapData(void* arg){
 void* sortandpublishData(void* arg){
 
     while(ros::ok()){
-		pthread_mutex_lock(&swap_mutex);
-		pthread_cond_wait(&sort_cv, &swap_mutex);
-		pthread_mutex_unlock(&swap_mutex);
-		
 		pthread_mutex_lock(&sort_mutex);
+		pthread_cond_wait(&sort_cv, &sort_mutex);
 		
 		uint32_t Radar_no = canframe_sort.can_id >> 4;
 	    uint32_t Message_type = canframe_sort.can_id & 0x0F;
@@ -167,13 +158,13 @@ void* sortandpublishData(void* arg){
 						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].y, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
-						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].y))	exception_flag += 1;
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].z, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
-						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].z))	exception_flag += 1;
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						memcpy(&radar_data[Radar_no].PCD_data[countObj[Radar_no]].velocity, &canframe_sort.data[currentp], sizeof(float));
 						currentp+=(sizeof(float));
-						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].velocity))	exception_flag += 1;
+						if(std::isnan(radar_data[Radar_no].PCD_data[countObj[Radar_no]].x))	exception_flag += 1;
 						
 						try{
 							if(exception_flag){
@@ -199,7 +190,6 @@ void* sortandpublishData(void* arg){
 						printf("%f %f %f %f\n", temp_radar.x, temp_radar.y, temp_radar.z, temp_radar.velocity);
 						countObj[Radar_no]++;
 					}
-					currentframes = 0;
 
 					//radar_pub[Radar_no].publish(radar[Radar_no]);
 					break;
@@ -218,11 +208,9 @@ void* sortandpublishData(void* arg){
 			
 				radar_pub[Radar_no].publish(radar[Radar_no]);
 				radar[Radar_no].radarscan.clear();		
-				countObj[Radar_no] = 0;
-				memset(&radar_data, 0, sizeof(radar_data));
+				memset(&radar_data[Radar_no], 0, sizeof(radar_data[Radar_no]));
 				//pthread_cond_signal(&read_cv);
 			}
-			canframe_sort = canframe_null;	
 		}
 					
 		pthread_mutex_unlock(&sort_mutex);
