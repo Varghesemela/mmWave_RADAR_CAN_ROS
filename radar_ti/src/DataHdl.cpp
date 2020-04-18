@@ -1,6 +1,6 @@
 #include "DataHdl.h"
 
-int exception_flag1 = 0, exception_flag2 = 0, exception_flag3 = 0;
+int exception_flag;
 
 int main(int argc, char **argv){
     int thret1, thret2, thret3;
@@ -61,8 +61,7 @@ int main(int argc, char **argv){
 }
 
 void* readCANData(void* arg){
-	
-	struct timespec timevar;
+
     while(ros::ok()){
 		int cansock_fd, i; 
         int enable_canfd = 1;                       
@@ -88,18 +87,15 @@ void* readCANData(void* arg){
 	    }
         nbytes = read(cansock_fd, &canframe_read, sizeof(struct canfd_frame));
         if (nbytes < 0) {
-	        printf("error: Read");	         
+	        perror("error: Read");	         
         } 
         if (close(cansock_fd) < 0) {
 		    perror("error: Close");		     
 	    }
-		//printf("readdata\n");
-		exception_flag3 = 1;
-		while(exception_flag3)	pthread_cond_signal(&swap_cv);
+		// printf("readdata\n");
+		pthread_cond_signal(&swap_cv);
 		
 		pthread_cond_wait(&read_cv, &read_mutex);
-		exception_flag1 = 0;
-		//printf("read wait done \n");
 		pthread_mutex_unlock(&read_mutex);
 		
     }
@@ -112,7 +108,6 @@ void* swapData(void* arg){
 
 		pthread_mutex_lock(&swap_mutex);
 		pthread_cond_wait(&swap_cv, &swap_mutex);
-		exception_flag3 = 0;
 		pthread_mutex_lock(&sort_mutex);
 		pthread_mutex_lock(&read_mutex);
 		struct canfd_frame canframe_temp = canframe_read;
@@ -121,10 +116,8 @@ void* swapData(void* arg){
 		// printf("swapdata\n");
 		pthread_mutex_unlock(&sort_mutex);
 		pthread_mutex_unlock(&read_mutex);
-		exception_flag1 = 1;
-		exception_flag2 = 1;
-		while(exception_flag2)	pthread_cond_signal(&sort_cv);
-		while(exception_flag1)	pthread_cond_signal(&read_cv);
+		pthread_cond_signal(&sort_cv);
+		pthread_cond_signal(&read_cv);
 		pthread_mutex_unlock(&swap_mutex);
 
 	}
@@ -135,9 +128,7 @@ void* sortandpublishData(void* arg){
 
     while(ros::ok()){
 		pthread_mutex_lock(&sort_mutex);
-		
 		pthread_cond_wait(&sort_cv, &sort_mutex);
-		exception_flag2 = 0;
 		
 		uint32_t Radar_no = canframe_sort.can_id >> 4;
 	    uint32_t Message_type = canframe_sort.can_id & 0x0F;
@@ -157,7 +148,7 @@ void* sortandpublishData(void* arg){
 					else{
 						currentframes = radar_data[Radar_no].Num_of_Objects-countObj[Radar_no];
 					}
-					//printf("%d\n", currentframes);
+					//printf("%d\n", currentframes);	
 
 					for(int i = 0; i < currentframes; i++){
 						radar_ti::RadarScan temp_radar;
@@ -187,7 +178,7 @@ void* sortandpublishData(void* arg){
 
 				case noiseprofile_frame:
 					//write code here to copy noise profile data if needed
-					
+					countObj[Radar_no] = 0;
 
 					break;
 				default:
@@ -195,7 +186,7 @@ void* sortandpublishData(void* arg){
 					printf("garbage data\n");
 					break;
 			}
-			if(radar_data[Radar_no].Num_of_Objects <= countObj[Radar_no]){
+			if(radar_data[Radar_no].Num_of_Objects == countObj[Radar_no]){
 			
 				radar_pub[Radar_no].publish(radar[Radar_no]);
 				radar[Radar_no].radarscan.clear();		
@@ -204,9 +195,8 @@ void* sortandpublishData(void* arg){
 				
 				//pthread_cond_signal(&read_cv);
 			}
-			fflush(stdout);
 		}
-		memset(&canframe_sort, 0, sizeof(canframe_sort));			
+					
 		pthread_mutex_unlock(&sort_mutex);
     }
 	return NULL;
