@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
+//#include <linux/time.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
@@ -66,6 +67,7 @@ struct canfd_frame canframe_read, canframe_sort, canframe_null = {};
 struct radar_frame radar_data[total_radars];
 uint32_t Radar_no = 0, Message_type = 0;
 uint8_t countObj[total_radars] = {0};
+int exception_flag = 0;
 
 pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t swap_mutex = PTHREAD_MUTEX_INITIALIZER;

@@ -1,5 +1,5 @@
 #include "DataHdl.h"
-int exception_flag = 0;
+
 int main(int argc, char **argv){
     int thret1, thret2, thret3;
     pthread_t readThread, swapThread, sortThread;
@@ -89,7 +89,7 @@ void* readCANData(void* arg){
         if (nbytes < 0) {
 	        perror("error: Read");	         
         } 
-        printf("readdata\n");
+        //printf("readdata\n");
 		exception_flag = 0;
 		while(!exception_flag) pthread_cond_broadcast(&swap_cv);
 		
@@ -116,7 +116,7 @@ void* swapData(void* arg){
 		struct canfd_frame canframe_temp = canframe_read;
 		canframe_read = canframe_sort;
 		canframe_sort = canframe_temp;
-		 printf("swapdata\n");
+		 //printf("swapdata\n");
 		pthread_mutex_unlock(&read_mutex);
 		pthread_mutex_unlock(&sort_mutex);
 		pthread_cond_signal(&sort_cv);		
