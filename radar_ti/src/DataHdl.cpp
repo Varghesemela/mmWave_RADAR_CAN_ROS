@@ -1,4 +1,5 @@
 #include "DataHdl.h"
+void* readCANData(void* arg);
 
 int main(int argc, char **argv){
     int thret1, thret2, thret3;
