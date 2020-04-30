@@ -41,16 +41,16 @@ int main(){
 
 	//radar_data.can_id = 2;
 	//radar_data.timeCPUcycles= t.tv_sec;		//seconds; 
-	radar_data.Num_of_Objects = 22;
-	radar_data.PCD_data[0].x = 32;
-	radar_data.PCD_data[0].y = 33;
-	radar_data.PCD_data[0].z = 34;
-	if(ioctl(fd1, RADAR_CMD, (radar_frame_t*)&radar_data) == -1){
-       	printf("issue in sending data\n");
-    }
-    else{
-    	printf("data sent: %f\n", radar_data.PCD_data[0].x );
-    }
+	// radar_data.Num_of_Objects = 22;
+	// radar_data.PCD_data[0].x = 32;
+	// radar_data.PCD_data[0].y = 33;
+	// radar_data.PCD_data[0].z = 34;
+	// if(ioctl(fd1, RADAR_CMD, (radar_frame_t*)&radar_data) == -1){
+ //       	printf("issue in sending data\n");
+ //    }
+ //    else{
+ //    	printf("data sent: %f\n", radar_data.PCD_data[0].x );
+ //    }
 
 	if(ioctl(fd1, RADAR_DAT, (radar_frame_t*)&radar_data) == -1){
         	printf("issue in getting data\n");
@@ -64,7 +64,15 @@ int main(){
 
 	close(fd1);
 
+	fd2 = open("/dev/radar/radar1", O_RDWR);
 	
+	if(fd2 < 0){
+		printf("Cannot open file");
+		return -1;
+	}
+
+
+	close(fd2);
 			
 
 }

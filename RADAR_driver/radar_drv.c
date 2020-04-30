@@ -34,7 +34,7 @@
 #define RADAR_DAT _IOR(RADAR_ID, data_cmd, radar_frame_t *)
 #define RADAR_CMD _IOW(RADAR_ID, data_cmd, radar_frame_t *)
 
-int32_t val = 0, i = 0;
+int32_t val = 0, i = 0, kmem_count = 0;
 
 
 dev_t radar = 0;
@@ -77,18 +77,26 @@ static struct  file_operations fops = {
 };
 
 static int  radar_open(struct inode *inode, struct file *file){
+	minor_num = MINOR(inode->i_rdev);
 	if((kernel_buffer = kmalloc(mem_size, GFP_KERNEL))==0){
 		printk(KERN_INFO "Cannot allocate memory in kernel\n");
 		return -1;
 	}
-	minor_num = MINOR(inode->i_rdev);
+	kmem_count++;
 	printk(KERN_INFO "Radar device file opened\n");
 	return 0;
 
 }
 
 static int radar_release(struct inode *inode, struct file *file){
-	kfree(kernel_buffer);
+	if(kmem_count > 0){
+		if(kernel_buffer){
+			kfree(kernel_buffer);
+			kernel_buffer = NULL;
+		}
+
+		kmem_count--;
+	}
 	printk(KERN_INFO "Radar device is closed\n");
 	return 0;
 
@@ -125,8 +133,8 @@ static long radar_ioctl(struct file *pfile, unsigned int cmd, unsigned long arg)
 
 		case RADAR_DAT:
 			getnstimeofday(&t);
-			radar_data.can_id = minor_num;
-			radar_data.timeCPUcycles= t.tv_sec;		//seconds; 
+			//radar_data.can_id = minor_num;
+			//radar_data.timeCPUcycles= t.tv_sec;		//seconds; 
 			//radar_data.Num_of_Objects = 22;
 			copy_to_user((radar_frame_t*)arg, &radar_data, sizeof(radar_data));
 			printk(KERN_INFO "Data read from radar\n");
@@ -179,7 +187,7 @@ int cdev_creation(void){
 }
 
 static int __init radar_driver_init(void){
-
+	radar_data.Num_of_Objects = 22;
 	/* Allocating major numbers */
 	if((alloc_chrdev_region(&radar, 0, Num_of_radars, "radar")) < 0){
 		printk(KERN_INFO "Cannot allocate major number\n");
