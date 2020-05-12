@@ -1,7 +1,40 @@
 #include "DataHdl.h"
+
 void* readCANData(void* arg);
+void* swapData(void* arg);
+void* sortandpublishData(void* arg);
+
+void sig_int_handler (int sig_num )
+{
+	pthread_cancel(swapThread);
+	pthread_cancel(sortThread);
+	pthread_cancel(readThread);
+
+	pthread_cond_destroy(&read_cv);
+	pthread_cond_destroy(&swap_cv);    
+	pthread_cond_destroy(&sort_cv);  
+	pthread_mutex_destroy(&read_mutex);
+    pthread_mutex_destroy(&swap_mutex);
+    pthread_mutex_destroy(&sort_mutex);
+    ROS_INFO("Exception handled \n",thret1);
+    printf("Exception %d \n", sig_num);
+    ros::shutdown();
+}
 
 int main(int argc, char **argv){
+
+	// install signal handler to react on ctrl+c
+	{
+		struct sigaction action = { };
+	    action.sa_handler = sig_int_handler;
+
+	    sigaction (SIGHUP, &action, NULL);	// controlling terminal closed, Ctrl-D
+	    sigaction (SIGINT, &action, NULL);	// Ctrl-C
+	    sigaction (SIGQUIT, &action, NULL);	// Ctrl-\, clean quit with core dump
+	    sigaction (SIGABRT, &action, NULL);	// abort() called.
+	    sigaction (SIGTERM, &action, NULL);	// kill command
+	}
+
     int thret1, thret2, thret3;
     pthread_t readThread, swapThread, sortThread;
     
