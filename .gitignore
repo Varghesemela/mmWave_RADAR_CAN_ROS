@@ -1,2 +1,2 @@
-*.o
+~/RADAR_driver/*.o
 *.cmd
