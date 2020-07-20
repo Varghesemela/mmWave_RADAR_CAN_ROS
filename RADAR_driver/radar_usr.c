@@ -121,7 +121,7 @@ void readCANData(void){
 int putdata(void){
 
 	int32_t val, num;
-	int currentp = 0;
+	int currentframes = 0, currentp = 0;
 	for(int i=0; i<strlen(canframe_read.data); i++){
 		printf("%02X", canframe_read.data[i]);
 	}
@@ -138,11 +138,11 @@ int putdata(void){
 					break;
 
 				case PCD_frame:
-					if((radar_data.Num_of_Objects-countObj[Radar_no])>3){
+					if((radar_data.Num_of_Objects-countObj)>3){
 						currentframes = 4;
 					}
 					else{
-						currentframes = radar_data.Num_of_Objects-countObj[Radar_no];
+						currentframes = radar_data.Num_of_Objects-countObj;
 					}
 
 					for(int i = 0; i < currentframes; i++){
@@ -182,6 +182,7 @@ int putdata(void){
 					close(fd1);
 			
 					break;
+				}
 
 
 }
