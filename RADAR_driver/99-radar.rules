@@ -1,2 +1,2 @@
-ACTION=="add", DEVPATH=="/devices/virtual/Radars/radar1" SUBSYSTEM=="radar_class" RUN+="/bin/mkdir /dev/Radars"
-ACTION=="remove", DEVPATH=="/devices/virtual/Radars/radar1" SUBSYSTEM=="radar_class" RUN+="/bin/rmdir /dev/Radars"
+ACTION=="add", DEVPATH=="/devices/virtual/radar_class/radar1" SUBSYSTEM=="radar_class" RUN+="/bin/mkdir /dev/radar"
+ACTION=="remove", DEVPATH=="/devices/virtual/radar_class/radar1" SUBSYSTEM=="radar_class" RUN+="/bin/rmdir /dev/radar"

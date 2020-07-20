@@ -7,18 +7,18 @@ time_t seconds;
 
 typedef struct DPIF_PointCloudCartesian{
 	/*! @brief x - coordinate in meters */
-	float x;
+	long x;
 
 	/*! @brief y - coordinate in meters */
-	float y;
+	long y;
 
 	/*! @brief z - coordinate in meters */
-	float z;
+	long z;
 
 	/*! @brief Doppler velocity estimate in m/s. Positive velocity means target
 	* is moving away from the sensor and negative velocity means target
 	* is moving towards the sensor. */
-	float velocity;
+	long velocity;
 
 }DPIF_PointCloudCartesian_t;
 
@@ -38,12 +38,12 @@ typedef struct radar_frame{
 	DPIF_PointCloudSideInfo_t	  noiseprofile_data[Radar_obj_max];
 }radar_frame_t;
 
-typedef struct radar_command{
-	uint32_t   can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-	uint32_t   timeCPUcycles;
-	uint32_t	   Num_of_Objects;
-	DPIF_PointCloudCartesian_t    PCD_data[Radar_obj_max];
-	DPIF_PointCloudSideInfo_t	  noiseprofile_data[Radar_obj_max];
-}radar_command_t;
+// typedef struct radar_command{
+// 	uint32_t   can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+// 	uint32_t   timeCPUcycles;
+// 	uint32_t	   Num_of_Objects;
+// 	DPIF_PointCloudCartesian_t    PCD_data[Radar_obj_max];
+// 	DPIF_PointCloudSideInfo_t	  noiseprofile_data[Radar_obj_max];
+// }radar_command_t;
 
 radar_frame_t radar_data;

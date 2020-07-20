@@ -26,10 +26,11 @@
 
 
 
-struct canfd_frame canframe_read, canframe_null = {};
 uint32_t Radar_no = 0, Message_type = 0;
-uint8_t countObj[total_radars] = {0};
+uint8_t countObj = {0};
 int exception_flag = 0;
+struct canfd_frame canframe_read, canframe_sort;
+
 
 pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t swap_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -38,7 +39,3 @@ pthread_mutex_t sort_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t read_cv = PTHREAD_COND_INITIALIZER;
 pthread_cond_t swap_cv = PTHREAD_COND_INITIALIZER;
 pthread_cond_t sort_cv = PTHREAD_COND_INITIALIZER;
-
-void* readCANData(void* arg);
-
-
